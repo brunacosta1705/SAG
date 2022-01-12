@@ -1,4 +1,5 @@
 import psycopg2 as db
+from flask import jsonify
 
 class Config:
     def __init__(self):
@@ -64,10 +65,27 @@ class Sag(Connection):
             self.commit()
         except Exception as e:
             print("Erro ao inserir ", e)
+    
+    #consulta empresa
+    #/consulta/dominio
+    def consulta(self,dominio):
+        try:   
+            sql = f"select case when (dtcriacao+INTERVAL'30 days') > CURRENT_DATE then 'ativo' else 'inativo' end from autenticacao where dominio = '" + dominio +"'"
+            status_empresa = self.query(sql)
+            return {"status": status_empresa}
+
+        except Exception as e:
+           print("Dominio nao encontrado", e)
 
 if __name__ == "__main__":
     sag = Sag()
+
+    
+
+    print(sag.query('select * from autenticacao'))
     #sag.insert('2', 'semalo.com.br', '11/01/2022', 'D')
+    #print(sag.consulta("soldamaq.com.br"))
+
 
 
 
