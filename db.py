@@ -1,5 +1,8 @@
+from typing import Counter
 import psycopg2 as db
 from flask import jsonify
+
+from datetime import datetime
 
 class Config:
     def __init__(self):
@@ -52,40 +55,46 @@ class Connection(Config):
         self.cursor.execute(sql, params or ())
         return self.fetchall()
 
-
 class Sag(Connection):
     def __init__(self):
         Connection.__init__(self)
 
-    #insert
-    def insert(self, *args):
+    #cadastro
+    #/cadastro/
+    def insert(self,dominio,base):
         try:
-            sql = "INSERT INTO autenticacao (chave, dominio, dtcriacao,base) VALUES (%s)"
-            self.execute(sql, args)
-            self.commit()
+            #CONSULTA A EMPRESA NO BANCO E RETORNA A LISTA VAZIA SE NAO EXISTIR E COM VALOR SE EXISTIR
+            sql = f"select chave from autenticacao where dominio = '" + dominio + "'"
+            consulta = self.query(sql)
+
+            #EMPRESA JÁ EXISTE NO BANCO
+            if len(consulta) >= 1:
+                return {"status" : "0",
+                        "mensagem" : "Dominio já existente " + dominio}
+
+            #EMPRESA NAO EXISTE , VAI INSERIR
+            elif len(consulta) == 0:
+                data = datetime.today().strftime('%Y-%m-%d')
+
+                sql = f"INSERT INTO autenticacao (dominio, dtcriacao,base) VALUES ('" + dominio + "','" + data + "','" + base + "')"
+                self.execute(sql)
+                self.commit()
+                return {"status" : "1", 
+                        "mensagem" : "Empresa inserida com sucesso"}  
+
         except Exception as e:
-            print("Erro ao inserir ", e)
-    
+            return {"status":"-1", "consulta" : consulta}
+
     #consulta empresa
     #/consulta/dominio
     def consulta(self,dominio):
         try:   
-            sql = f"select case when (dtcriacao+INTERVAL'30 days') > CURRENT_DATE then 'ativo' else 'inativo' end from autenticacao where dominio = '" + dominio +"'"
+            sql = f"select case when (dtcriacao+INTERVAL'30 days') > CURRENT_DATE then '1' else '0' end from autenticacao where dominio = '" + dominio +"'"
             status_empresa = self.query(sql)
-            return {"status": status_empresa}
+            return {"status": status_empresa[0][0]}
 
         except Exception as e:
-           print("Dominio nao encontrado", e)
+           return {"status":"-1",
+           "mensagem" : "Dominio nao encontrado"}
 
-if __name__ == "__main__":
-    sag = Sag()
-
-    
-
-    print(sag.query('select * from autenticacao'))
-    #sag.insert('2', 'semalo.com.br', '11/01/2022', 'D')
-    #print(sag.consulta("soldamaq.com.br"))
-
-
-
-
+#if __name__ == "__main__":
