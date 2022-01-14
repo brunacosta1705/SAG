@@ -70,7 +70,7 @@ class Sag(Connection):
             #EMPRESA JÁ EXISTE NO BANCO
             if len(consulta) >= 1:
                 return {"status" : "0",
-                        "mensagem" : "Dominio já existente " + dominio}
+                        "mensagem" : "Dominio " + dominio +" já existente"}
 
             #EMPRESA NAO EXISTE , VAI INSERIR
             elif len(consulta) == 0:
@@ -83,7 +83,7 @@ class Sag(Connection):
                         "mensagem" : "Empresa inserida com sucesso"}  
 
         except Exception as e:
-            return {"status":"-1", "consulta" : consulta}
+            return {"status":"-1", "mensagem" : "Erro ao inserir empresa"}
 
     #consulta empresa
     #/consulta/dominio
@@ -91,10 +91,18 @@ class Sag(Connection):
         try:   
             sql = f"select case when (dtcriacao+INTERVAL'30 days') > CURRENT_DATE then '1' else '0' end from autenticacao where dominio = '" + dominio +"'"
             status_empresa = self.query(sql)
-            return {"status": status_empresa[0][0]}
+
+            if status_empresa[0][0] == '1':
+                return {"status": "1",
+                "mensagem" : "Empresa ativa"}
+
+            elif status_empresa[0][0] == '0':
+                return {"status": "0",
+                "mensagem" : "Empresa inativa"}
+
 
         except Exception as e:
            return {"status":"-1",
-           "mensagem" : "Dominio nao encontrado"}
+           "mensagem" : "Dominio não encontrado"}
 
 #if __name__ == "__main__":

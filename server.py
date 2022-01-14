@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, json, Response
 from db import Sag
 
 sag = Sag()
@@ -9,12 +9,21 @@ app = Flask(__name__)
 def cadastro():
     body = request.get_json()
     resultado = sag.insert(body["dominio"], body["base"])
-    return resultado
+
+    status_http = Response()
+
+    return {"status_code" : status_http.status_code,
+            "resposta" : resultado}
 
 @app.route("/consulta/<dominio>", methods=["GET"])
-def consulta(dominio):   
+def consulta(dominio): 
+
     resultado = sag.consulta(dominio)
-    return resultado
+    status_http = Response()
+
+
+    return {"status_code" : status_http.status_code,
+            "resposta" : resultado}
 
 if __name__ == "__main__":
     app.run(debug=True)
